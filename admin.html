@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Administration — BSM SIR</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0efea;--surface:#fff;--bg2:#f5f5f4;--bg3:#eeedea;
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#88877f;
+  --brd:rgba(0,0,0,.1);--brd2:rgba(0,0,0,.18);
+  --blue:#185FA5;--blue-t:#0C447C;--blue-bg:#E6F1FB;
+  --green:#3B6D11;--green-bg:#EAF3DE;--green-t:#27500A;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-t:#791F1F;
+  --amber:#854F0B;--amber-bg:#FAEEDA;
+  --r:8px;--font:system-ui,sans-serif;--mono:monospace;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* LOGIN */
+.login-overlay{display:none;position:fixed;inset:0;background:rgba(240,239,234,.97);z-index:999;align-items:center;justify-content:center}
+.login-overlay.show{display:flex}
+.login-box{background:#fff;border:.5px solid var(--brd);border-radius:16px;padding:2.5rem;width:90%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.12);text-align:center}
+.login-logo{height:48px;margin-bottom:1rem}
+.login-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text3);margin-bottom:1.5rem}
+.lf{margin-bottom:10px;text-align:left}
+.lf label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
+.lf input{width:100%;border:.5px solid var(--brd2);border-radius:var(--r);padding:10px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)}
+.lf input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.login-btn{width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:6px}
+.login-btn:hover{background:var(--blue-t)}
+.login-err{font-size:12px;color:var(--red);margin-top:8px;min-height:16px}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:.5px solid var(--brd);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:12px}
+.logo-img{height:34px}
+.divider{width:1px;height:26px;background:var(--brd2)}
+.app-name{font-size:14px;font-weight:700;color:var(--text)}
+.app-sub{font-size:11px;color:var(--text3)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.btn{padding:7px 14px;border-radius:var(--r);border:.5px solid var(--brd2);background:var(--bg2);color:var(--text2);font-size:12px;font-family:inherit;cursor:pointer;font-weight:500;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{background:var(--bg3);color:var(--text)}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-blue:hover{background:var(--blue-t)}
+.btn-red{background:var(--red-bg);color:var(--red-t);border-color:rgba(163,45,45,.2)}
+.btn-red:hover{background:rgba(163,45,45,.15)}
+.btn-green{background:var(--green-bg);color:var(--green-t);border-color:rgba(59,109,17,.2)}
+.db-pill{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--bg2);border:.5px solid var(--brd);border-radius:999px;font-size:11px;color:var(--text3);font-family:var(--mono)}
+.db-dot{width:6px;height:6px;border-radius:50%;background:#ccc}
+.db-dot.ok{background:var(--green)}
+.db-dot.err{background:var(--red)}
+
+/* WRAP */
+.wrap{max-width:1100px;margin:0 auto;padding:1.5rem}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.5rem}
+.kpi{background:var(--surface);border:.5px solid var(--brd);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.kpi-val{font-size:28px;font-weight:700;margin-bottom:4px;letter-spacing:-.02em}
+.kpi-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+
+/* TABLE */
+.card{background:var(--surface);border:.5px solid var(--brd);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.card-hdr{padding:1rem 1.25rem;border-bottom:.5px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--bg2);padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:.5px solid var(--brd);white-space:nowrap}
+tbody tr{border-bottom:.5px solid var(--brd);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg2)}
+tbody td{padding:12px 14px;vertical-align:middle}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;display:inline-block}
+.b-actif{background:var(--green-bg);color:var(--green-t)}.b-actif::before{background:var(--green)}
+.b-inactif{background:var(--red-bg);color:var(--red-t)}.b-inactif::before{background:var(--red)}
+.b-bloque{background:var(--amber-bg);color:var(--amber)}.b-bloque::before{background:var(--amber)}
+.avatar{width:32px;height:32px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-name{font-weight:600}
+.user-email{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.actions{display:flex;gap:6px}
+.empty{text-align:center;padding:3rem;color:var(--text3)}
+.loading{text-align:center;padding:2rem;color:var(--text3)}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--brd2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* CONFIRM MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:1.75rem;max-width:380px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:.5rem}
+.modal-text{font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.6}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* TOAST */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;background:var(--text);color:#fff;padding:10px 18px;border-radius:var(--r);font-size:13px;font-weight:500;opacity:0;transform:translateY(10px);transition:opacity .2s,transform .2s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay show" id="loginOverlay">
+  <div class="login-box">
+    <img class="login-logo" src="https://www.sir.ci/wp-content/uploads/2023/03/Logo-SIR.svg" alt="SIR" onerror="this.style.display='none'"/>
+    <div class="login-title">Administration BSM</div>
+    <div class="login-sub">Accès réservé à l'administrateur</div>
+    <div class="lf"><label>Email administrateur</label>
+      <input type="email" id="li_email" placeholder="admin@sir.ci" autocomplete="email"/>
+    </div>
+    <div class="lf"><label>Mot de passe</label>
+      <input type="password" id="li_pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">→ Se connecter</button>
+    <div class="login-err" id="li_err"></div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <img class="logo-img" src="https://www.sir.ci/wp-content/uploads/2023/03/Logo-SIR.svg" alt="SIR" onerror="this.style.display='none'"/>
+    <div class="divider"></div>
+    <div>
+      <div class="app-name">⚙️ Administration</div>
+      <div class="app-sub">Gestion des utilisateurs BSM SIR</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="db-pill"><div class="db-dot" id="dbDot"></div><span id="dbLabel">Connexion...</span></div>
+    <button class="btn" onclick="loadUsers()">↻ Actualiser</button>
+    <a href="https://komakone.github.io/bsm/" class="btn">← BSM</a>
+    <button class="btn btn-red" onclick="doLogout()">Déconnexion</button>
+  </div>
+</div>
+
+<!-- CONTENU -->
+<div class="wrap">
+
+  <!-- KPIs -->
+  <div class="kpis" id="kpis">
+    <div class="kpi"><div class="kpi-val" id="kTotal">—</div><div class="kpi-lbl">Total utilisateurs</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--green)" id="kActifs">—</div><div class="kpi-lbl">Actifs</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--red)" id="kBloques">—</div><div class="kpi-lbl">Bloqués</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--blue)" id="kAujourdhui">—</div><div class="kpi-lbl">Connectés aujourd'hui</div></div>
+  </div>
+
+  <!-- TABLE UTILISATEURS -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-title">👥 Liste des utilisateurs</div>
+      <input type="text" id="search" placeholder="Rechercher..." oninput="filterUsers()"
+        style="border:.5px solid var(--brd2);border-radius:var(--r);padding:6px 12px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);width:220px"/>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Dernière connexion</th>
+            <th>Appareil</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody">
+          <tr><td colspan="5" class="loading"><div class="spinner"></div><br/>Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL CONFIRMATION -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal">
+    <div class="modal-title" id="confirmTitle">Confirmer</div>
+    <div class="modal-text" id="confirmText"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeConfirm()">Annuler</button>
+      <button class="btn btn-red" id="confirmBtn" onclick="execConfirm()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp }     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, setDoc }
+                              from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+                              from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey           : "AIzaSyC3giHhqn6TcLuFABsAxu8jviHZFoGlkAU",
+  authDomain       : "bon--sir.firebaseapp.com",
+  projectId        : "bon--sir",
+  storageBucket    : "bon--sir.firebasestorage.app",
+  messagingSenderId: "422498380994",
+  appId            : "1:422498380994:web:d96ffe63be4b1e4fef1f5b"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+const COLORS = ['#185FA5','#3B6D11','#854F0B','#6d28d9','#0891b2','#A32D2D','#0d9488','#b45309'];
+let allUsers = [];
+let pendingAction = null;
+
+/* ── AUTH ── */
+window.doLogin = async () => {
+  const email = document.getElementById('li_email').value.trim();
+  const pwd   = document.getElementById('li_pwd').value;
+  const err   = document.getElementById('li_err');
+  if (!email||!pwd) { err.textContent='Remplissez tous les champs.'; return; }
+  err.textContent = 'Connexion...';
+  try {
+    await signInWithEmailAndPassword(auth, email, pwd);
+    err.textContent = '';
+  } catch(e) {
+    const m = {
+      'auth/invalid-credential':'Email ou mot de passe incorrect.',
+      'auth/too-many-requests':'Trop de tentatives, réessayez plus tard.'
+    };
+    err.textContent = m[e.code] || 'Erreur : '+e.message;
+  }
+};
+
+window.doLogout = async () => { await signOut(auth); };
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById('loginOverlay').classList.remove('show');
+    setDb('ok', 'Connecté — '+( user.displayName||user.email));
+    loadUsers();
+  } else {
+    document.getElementById('loginOverlay').classList.add('show');
+    setDb('err', 'Non connecté');
+  }
+});
+
+/* ── CHARGER UTILISATEURS ── */
+window.loadUsers = async () => {
+  document.getElementById('usersBody').innerHTML =
+    '<tr><td colspan="5" class="loading"><div class="spinner"></div><br/>Chargement...</td></tr>';
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (b.derniere_co||'').localeCompare(a.derniere_co||''));
+    renderUsers(allUsers);
+  } catch(e) {
+    document.getElementById('usersBody').innerHTML =
+      `<tr><td colspan="5" class="empty">Erreur : ${e.message}</td></tr>`;
+  }
+};
+
+/* ── FILTRER ── */
+window.filterUsers = () => {
+  const q = document.getElementById('search').value.toLowerCase();
+  const filtered = allUsers.filter(u =>
+    (u.nom||'').toLowerCase().includes(q) ||
+    (u.email||'').toLowerCase().includes(q)
+  );
+  renderUsers(filtered);
+};
+
+/* ── AFFICHER ── */
+function renderUsers(users) {
+  // KPIs
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('kTotal').textContent    = users.length;
+  document.getElementById('kActifs').textContent   = users.filter(u=>u.actif!==false).length;
+  document.getElementById('kBloques').textContent  = users.filter(u=>u.actif===false).length;
+  document.getElementById('kAujourdhui').textContent = users.filter(u=>(u.derniere_co||'').startsWith(today)).length;
+
+  if (!users.length) {
+    document.getElementById('usersBody').innerHTML =
+      '<tr><td colspan="5" class="empty">Aucun utilisateur trouvé</td></tr>';
+    return;
+  }
+
+  document.getElementById('usersBody').innerHTML = users.map((u,i) => {
+    const nom     = u.nom || u.email?.split('@')[0] || '—';
+    const initiale= nom.charAt(0).toUpperCase();
+    const color   = COLORS[i % COLORS.length];
+    const date    = u.derniere_co ? fmtDate(u.derniere_co) : '—';
+    const appareil= u.appareil ? detectDevice(u.appareil) : '—';
+    const actif   = u.actif !== false;
+    const badge   = actif
+      ? '<span class="badge b-actif">Actif</span>'
+      : '<span class="badge b-bloque">Bloqué</span>';
+    const btnToggle = actif
+      ? `<button class="btn btn-red" onclick="toggleUser('${u.id}', false, '${esc(nom)}')">🚫 Bloquer</button>`
+      : `<button class="btn btn-green" onclick="toggleUser('${u.id}', true, '${esc(nom)}')">✓ Autoriser</button>`;
+
+    return `<tr>
+      <td>
+        <div class="user-info">
+          <div class="avatar" style="background:${color}">${initiale}</div>
+          <div><div class="user-name">${esc(nom)}</div><div class="user-email">${esc(u.email||'')}</div></div>
+        </div>
+      </td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--text2)">${date}</td>
+      <td style="font-size:12px;color:var(--text2)">${appareil}</td>
+      <td>${badge}</td>
+      <td>
+        <div class="actions">
+          ${btnToggle}
+          <button class="btn btn-red" onclick="confirmDelete('${u.id}', '${esc(nom)}')">🗑 Supprimer</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── BLOQUER / AUTORISER ── */
+window.toggleUser = async (uid, actif, nom) => {
+  try {
+    await updateDoc(doc(db, 'users', uid), { actif, statut: actif ? 'actif' : 'bloqué' });
+    const u = allUsers.find(x => x.id === uid);
+    if (u) u.actif = actif;
+    renderUsers(allUsers);
+    toast(actif ? `✓ ${nom} autorisé` : `🚫 ${nom} bloqué`);
+  } catch(e) { toast('Erreur : '+e.message, true); }
+};
+
+/* ── SUPPRIMER ── */
+window.confirmDelete = (uid, nom) => {
+  pendingAction = { type: 'delete', uid, nom };
+  document.getElementById('confirmTitle').textContent = 'Supprimer cet utilisateur ?';
+  document.getElementById('confirmText').innerHTML =
+    `Voulez-vous supprimer <strong>${nom}</strong> ?<br/>Cette action est irréversible.`;
+  document.getElementById('confirmBtn').textContent = '🗑 Supprimer';
+  document.getElementById('confirmOverlay').classList.add('open');
+};
+
+window.execConfirm = async () => {
+  if (!pendingAction) return;
+  closeConfirm();
+  if (pendingAction.type === 'delete') {
+    try {
+      await deleteDoc(doc(db, 'users', pendingAction.uid));
+      allUsers = allUsers.filter(u => u.id !== pendingAction.uid);
+      renderUsers(allUsers);
+      toast('✓ Utilisateur supprimé');
+    } catch(e) { toast('Erreur : '+e.message, true); }
+  }
+  pendingAction = null;
+};
+
+window.closeConfirm = () => {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  pendingAction = null;
+};
+
+/* ── HELPERS ── */
+function fmtDate(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+  } catch(e) { return iso; }
+}
+
+function detectDevice(ua) {
+  if (/iPhone/i.test(ua))  return '📱 iPhone';
+  if (/Android/i.test(ua)) return '📱 Android';
+  if (/iPad/i.test(ua))    return '📱 iPad';
+  if (/Windows/i.test(ua)) return '🖥 Windows';
+  if (/Mac/i.test(ua))     return '🖥 Mac';
+  if (/Linux/i.test(ua))   return '🖥 Linux';
+  return '🖥 Ordinateur';
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function setDb(state, label) {
+  document.getElementById('dbDot').className = 'db-dot ' + state;
+  document.getElementById('dbLabel').textContent = label;
+}
+
+let _toast;
+function toast(msg, err) {
+  clearTimeout(_toast);
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = err ? 'var(--red)' : '#1a1a18';
+  el.classList.add('show');
+  _toast = setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
